@@ -1,34 +1,90 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { addEmployee, getEmployeeById, updateEmployee } from '../service/EmployeeService';
 
 const AddEmployeeComponent: React.FC = () => {
+    const [employeeId, setEmployeeId] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
 
-const handleChangeFirstName = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFirstName(event.target.value);
-};
+    useEffect(() => {
+        if (id) {
+            const fetchEmployee = async () => {
+            const employee = await getEmployeeById(Number(id));
+            setEmployeeId(String(employee.id));
+            setFirstName(employee.firstName);
+            setLastName(employee.lastName);
+            setEmail(employee.email);
+        };
+        fetchEmployee();
+    }
+}, [id]);
 
-const handleChangeLastName = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLastName(event.target.value);
-};
+//const handleChangeFirstName = (event: React.ChangeEvent<HTMLInputElement>) => {
+//    setFirstName(event.target.value);
+//};
 
-const handleChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(event.target.value);
-};
+//const handleChangeLastName = (event: React.ChangeEvent<HTMLInputElement>) => {
+//    setLastName(event.target.value);
+//};
 
-const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+//const handleChangeEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
+//    setEmail(event.target.value);
+//};
+
+//const handleChangeemployeeId = (event: React.ChangeEvent<HTMLInputElement>) => {
+//    setEmployeeId(event.target.value);
+//};
+
+
+const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log({ firstName, lastName, email });
-    navigate('/');
+    // Form validation
+    if (!employeeId || !firstName || !lastName || !email) {
+        setErrorMessage('All fields are required!');
+        return;
+    }
+    if (!/^\d+$/.test(employeeId)) {
+        setErrorMessage('Student ID must be a numeric value!');
+        return;
+    }
+
+    const employee = { id: employeeId, firstName, lastName, email };
+
+    try {
+        if (id) {
+            await updateEmployee(Number(id), employee);
+        } else {
+            await addEmployee(employee);
+        }
+        navigate('/');
+    } catch (error) {
+        console.error('Failed to add employee:', error);
+        setErrorMessage('An error occurred while saving the employee.');
+    }
 };
 
 return (
-<div className="container mt-3">
-    <h3 className="text-primary text-center">Add Employee</h3>
-    <form onSubmit={handleSubmit} className="card p-3 shadow">
+    <div className="container mt-3">
+        <h3 className="text-primary text-center">{id ? 'Update Employee' : 'Add Employee'}</h3>
+        {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+        <form onSubmit={handleSubmit} className="card p-3 shadow">
+        <div className="form-group mb-3">
+            <label htmlFor="employeeId">ID</label>
+            <input
+                type="text"
+                id="employeeId"
+                className="form-control"
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+                required
+                disabled={!!id} />
+        </div>
         <div className="form-group mb-3">
             <label htmlFor="firstName">First Name</label>
             <input
@@ -36,7 +92,7 @@ return (
             id="firstName"
             className="form-control"
             value={firstName}
-            onChange={handleChangeFirstName}
+            onChange={(e) => setFirstName(e.target.value)}
             required/>
         </div>
         <div className="form-group mb-3">
@@ -46,7 +102,7 @@ return (
             id="lastName"
             className="form-control"
             value={lastName}
-            onChange={handleChangeLastName}
+            onChange={(e) => setLastName(e.target.value)}
             required/>
         </div>
         <div className="form-group mb-3">
@@ -56,15 +112,15 @@ return (
             id="email"
             className="form-control"
             value={email}
-            onChange={handleChangeEmail}
+            onChange={(e) => setEmail(e.target.value)}
             required/>
         </div>
         <button type="submit" className="btn btn-primary">
-            Add Employee
+            {id ? 'Update Employee' : 'Add Employee'}
         </button>
-    </form>
-</div>
-);
+        </form>
+    </div>
+    );
 };
 
 export default AddEmployeeComponent;

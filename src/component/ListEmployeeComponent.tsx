@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { getEmployee } from '../service/EmployeeService';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getEmployee, deleteEmployee } from '../service/EmployeeService';
 
 interface Employee {
     id: number;
@@ -9,11 +9,11 @@ interface Employee {
     email: string;
 }
 
-
 const ListEmployeeComponent: React.FC = () => {
+    const [employees, setEmployees] = React.useState<Employee[]>([]);
+    const navigate = useNavigate();
 
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    useEffect(() => {
+    React.useEffect(() => {
         const fetchEmployees = async () => {
             try {
                 const data = await getEmployee();
@@ -21,14 +21,25 @@ const ListEmployeeComponent: React.FC = () => {
             } catch (error) {
                 console.error('Failed to fetch employees:',error);
             } };
-        fetchEmployees();}, []);
+        fetchEmployees();
+    }, []);
 
+    const handleAddEmployee = () => {
+        navigate('/add-employee');
+    };
 
-const navigate = useNavigate();
+    const handleUpdate = (id: number) => {
+        navigate(`/update-employee/${id}`);
+    };
 
-const handleAddEmployee = () => {
-    navigate('/add-employee');
-};
+    const handleDelete = async (id: number) => {
+        try {
+            await deleteEmployee(id);
+            setEmployees((prev) => prev.filter((employee) => employee.id !== id));
+        } catch (error) {
+            console.error('Failed to delete employee:', error);
+        }
+    };
 
     return (
     <div className="container mt-3">
@@ -43,6 +54,7 @@ const handleAddEmployee = () => {
                     <th>First Name</th>
                     <th>Last Name</th>
                     <th>Email</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,6 +64,14 @@ const handleAddEmployee = () => {
                         <td>{employee.firstName}</td>
                         <td>{employee.lastName}</td>
                         <td>{employee.email}</td>
+                        <td>
+                            <button className="btn btn-primary me-2" onClick={() => handleUpdate(employee.id)}>
+                                Update
+                            </button>
+                            <button className="btn btn-danger" onClick={() => handleDelete(employee.id)}>
+                                Delete
+                            </button>
+                        </td>
                     </tr>
                 ))}
             </tbody>
