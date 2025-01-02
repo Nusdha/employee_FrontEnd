@@ -16,8 +16,7 @@ export const getEmployeeById = async (id: number) => {
     return response.data;
 };
 
-export const updateEmployee = async (id: number, employee: {
-    firstName: string; lastName: string; email: string }) => {
+export const updateEmployee = async (id: number, employee: {id:string;firstName: string; lastName: string; email: string }) => {
         const response = await axios.put(`${API_URL}/${id}`, employee);
         return response.data;
 };
